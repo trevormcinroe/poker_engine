@@ -66,8 +66,17 @@ class InterpreterEngine:
 
         return hand_one, hand_two, board
 
-    def hand_compare(self, hand_one, hand_two, board):
-        """"""
+    def compare_hands(self, hand_one, hand_two, board):
+        """
+
+        Args:
+            hand_one:
+            hand_two:
+            board:
+
+        Returns:
+
+        """
 
         # First, translating any facecards into their respective
         # numerical representation
@@ -76,6 +85,21 @@ class InterpreterEngine:
             hand_two=hand_two,
             board=board
         )
+
+        # First finding what the two hands have
+        first_hand = self._analyze_hand(hand=hand_one, board=board)
+        second_hand = self._analyze_hand(hand=hand_two, board=board)
+
+    def _analyze_hand(self, hand, board):
+        """
+
+        Args:
+            hand:
+            board:
+
+        Returns:
+
+        """
 
         # Gathering informaiton about the board
         suit_counts = {
@@ -97,14 +121,27 @@ class InterpreterEngine:
 
             # If there is a suit with more than 2 occurances in the board,
             # Then we need to check for the possibility of a flush
-            if not np.max([v for k, v in suit_counts.items()]) > 2:
+            max_suit_cnt = np.max([v for k, v in suit_counts.items()])
+
+            if not max_suit_cnt > 2:
                 flush_possible = False
 
-            # Now there are two possible ways to make a flush
+            # Now that we have determined that a flush is possible via the board,
+            # Lets determine if the two given hands also allow for it...
             # 3 board, 2 hand
+            if max_suit_cnt == 3:
+                if not len(np.unique(hand['suits'])) == 1:
+                    flush_possible = False
+
+                # If we are here in the logic flow, the board contains 3 of the
+                # same suit and the hand has two of the same suit. All that is left
+                # to do now is check whether or not these two groups are the same
+                # suit...
+
 
             # 4 board, 1 hand
-            pass
+            if max_suit_cnt == 4:
+                pass
 
         ################
         ## FULL HOUSE ##
