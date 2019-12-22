@@ -28,8 +28,54 @@ class InterpreterEngine:
         }
 
 
+    def _face_card_translate(self, hand_one, hand_two, board):
+        """To make hand comparisons easier, we want to translate all face cards
+        into a numerical representation. This allows for logical comparisons
+        such as {>, <, ==} and the like.
+
+        Args:
+            hand_one:
+            hand_two:
+            board:
+
+        Returns:
+
+        """
+
+        # For this process, we take advantage of Python's built-in
+        # list comprehension capabilities. We add in a simple if-else
+        # statement to check if each item in the given dictionaries
+        # exists within the list of facecards
+        hand_one = [
+            self.face_card_translator[x]
+            if x in list(self.face_card_translator.keys()) else x
+            for x in hand_one['cards']
+        ]
+
+        hand_two = [
+            self.face_card_translator[x]
+            if x in list(self.face_card_translator.keys()) else x
+            for x in hand_two['cards']
+        ]
+
+        board = [
+            self.face_card_translator[x]
+            if x in list(self.face_card_translator.keys()) else x
+            for x in board['cards']
+        ]
+
+        return hand_one, hand_two, board
+
     def hand_compare(self, hand_one, hand_two, board):
         """"""
+
+        # First, translating any facecards into their respective
+        # numerical representation
+        hand_one, hand_two, board = self._face_card_translate(
+            hand_one=hand_one,
+            hand_two=hand_two,
+            board=board
+        )
 
         # Gathering informaiton about the board
         suit_counts = {
@@ -103,8 +149,24 @@ class InterpreterEngine:
 
 
 
-a = [1, 1, 2, 3, 3, 3, 4]
+hand_one = {
+    'cards': [2, 'J'],
+    'suits': ['s', 's']
+}
 
-b = {x: a.count(x) for x in a}
+hand_two = {
+    'cards': ['K', 'K'],
+    'suits': ['s', 'd']
+}
 
-print(b)
+board = {
+    'cards': ['A', 'Q'],
+    'suits': ['s', 's']
+}
+
+a = InterpreterEngine()
+
+print(a._face_card_translate(hand_one=hand_one,
+                       hand_two=hand_two,
+                       board=board)
+)
