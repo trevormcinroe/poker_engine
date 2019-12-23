@@ -101,8 +101,9 @@ class InterpreterEngine:
         # First finding what the two hands have
         # We'll begin with the first hand...
         # return self._check_quads(hand=hand_one, board=board, card_counts=card_counts)
-        return self._check_fullhouse(hand=hand_one, board=board, card_counts=card_counts)
+        # return self._check_fullhouse(hand=hand_one, board=board, card_counts=card_counts)
         # return self._check_flush(hand=hand_one, board=board, suit_counts=suit_counts)
+        return self._check_straight(hand=hand_one, board=board)
 
     def _check_straight_flush(self, hand, suit_counts, card_counts):
         """"""
@@ -395,9 +396,80 @@ class InterpreterEngine:
         else:
             return False, None, None
 
-    def _check_straight(self, hand, suit_counts, card_counts):
-        """"""
-        pass
+    def _check_straight(self, hand, board):
+        """
+
+        Args:
+            hand:
+            board:
+
+        Returns:
+            Bool for existence, high card if exists
+        """
+
+        # First, let's connect the list of the hand and the board and then make them in descending order
+        all_cards = board['cards'] + hand['cards']
+        all_cards = list(np.unique(all_cards))
+        all_cards.sort(reverse=True)
+
+        # If there is an ace in the list, this should be handled in a special way...
+        if 14 in all_cards:
+
+            # (1) Checking for face-card flush
+            # Subtracting each card's value by the card after it
+            # If a straight exists, there should be a slice of four 1's
+            sequential_check = [all_cards[x] - all_cards[x+1] for x in range(len(all_cards) - 1)]
+
+            # To find this, we will create a sliding window across sequential_check
+            x_beg = 0
+            x_end = 3
+
+            while x_end < len(sequential_check):
+                if np.mean(sequential_check[x_beg: x_end + 1]) == 1:
+                    return True, np.max(all_cards[x_beg: x_end+1])
+
+                x_beg += 1
+                x_end += 1
+
+            # (2) Checking for the wheel
+            # To do so, we reassign 14 to 1 and resort the list
+            all_cards[all_cards.index(14)] = 1
+            all_cards.sort(reverse=True)
+
+            # Subtracting each card's value by the card after it
+            # If a straight exists, there should be a slice of four 1's
+            sequential_check = [all_cards[x] - all_cards[x+1] for x in range(len(all_cards) - 1)]
+
+            # To find this, we will create a sliding window across sequential_check
+            x_beg = 0
+            x_end = 3
+
+            while x_end < len(sequential_check):
+                if np.mean(sequential_check[x_beg: x_end + 1]) == 1:
+                    return True, np.max(all_cards[x_beg: x_end+1])
+
+                x_beg += 1
+                x_end += 1
+
+            return False, None
+
+        else:
+            # Subtracting each card's value by the card after it
+            # If a straight exists, there should be a slice of four 1's
+            sequential_check = [all_cards[x] - all_cards[x+1] for x in range(len(all_cards) - 1)]
+
+            # To find this, we will create a sliding window across sequential_check
+            x_beg = 0
+            x_end = 3
+
+            while x_end < len(sequential_check):
+                if np.mean(sequential_check[x_beg: x_end+1]) == 1:
+                    return True, np.max(all_cards[x_beg: x_end+1])
+
+                x_beg += 1
+                x_end += 1
+
+            return False, None
 
     def _check_trips(self, hand, suit_counts, card_counts):
         """"""
@@ -538,10 +610,8 @@ class InterpreterEngine:
 
 
 
-
-
 hand_one = {
-    'cards': [10, 5],
+    'cards': [9, 10],
     'suits': ['s', 's']
 }
 
@@ -551,7 +621,7 @@ hand_two = {
 }
 
 board = {
-    'cards': [5, 5, 'K', 'K', 10],
+    'cards': [5, 3, 'Q', 'K', 'J'],
     'suits': ['d', 's', 's', 's', 's']
 }
 
