@@ -103,7 +103,8 @@ class InterpreterEngine:
         # return self._check_quads(hand=hand_one, board=board, card_counts=card_counts)
         # return self._check_fullhouse(hand=hand_one, board=board, card_counts=card_counts)
         # return self._check_flush(hand=hand_one, board=board, suit_counts=suit_counts)
-        return self._check_straight(hand=hand_one, board=board)
+        # return self._check_straight(hand=hand_one, board=board)
+        return self._check_trips(hand=hand_one, card_counts=card_counts)
 
     def _check_straight_flush(self, hand, suit_counts, card_counts):
         """"""
@@ -471,9 +472,68 @@ class InterpreterEngine:
 
             return False, None
 
-    def _check_trips(self, hand, suit_counts, card_counts):
+    def _check_trips(self, hand, card_counts):
         """"""
-        pass
+        # (1) Simply flopped trips
+        if len(np.unique(hand['cards'])) == 1:
+
+            # (a) Board could have trips
+            if 3 in [v for k, v in card_counts.items()]:
+
+                # (i) Flopped set > board trips
+                if hand['cards'][0] > [k for k, v in card_counts.items() if v == 3][0]:
+                    return True, hand['cards'][0]
+                # (ii) Flopped set < board trips
+                else:
+                    return True, [k for k, v in card_counts.items() if v == 3][0]
+
+            if hand['cards'][0] in board['cards']:
+                return True, hand['cards'][0]
+
+        # (2) Board can have trips
+        if 3 in [v for k, v in card_counts.items()]:
+
+            # (a) Flopped trips -- we can again abuse the logic flow. No need to check for quads
+            if len(np.unique(hand['cards'])) == 1 and np.unique(hand['cards'])[0] in board['cards']:
+
+                # (i) Flopped trips > board trips
+                if hand['cards'][0] > [k for k, v in card_counts.items() if v == 3][0]:
+                    return True, hand['cards'][0]
+
+                # (ii) Flopped trips < board trips
+                else:
+                    return True, [k for k, v in card_counts.items() if v == 3][0]
+
+            # (b) Not flopped trips
+            else:
+
+                # (i) Board is also paired
+                if 2 in [v for k, v in card_counts.items() if v == 2]:
+                    if True in [x in [k for k, v in card_counts.items() if v == 2] for x in hand['cards']]:
+                        hand_to_board = [x for x in hand['cards'] if x in [k for k, v in card_counts.items() if v ==2]]
+
+                        # Now we have to check to see if the connected trips are > or < board trips
+                        if hand_to_board > [k for k, v in card_counts.items() if v == 3][0]:
+                            return True, hand_to_board[0]
+                        else:
+                            return True, [k for k, v in card_counts.items() if v == 3][0]
+                else:
+                    return True, [k for k, v in card_counts.items() if v == 3][0]
+
+        # (3) Board has a pair
+        if 2 in [v for k, v in card_counts.items()]:
+
+            # Now, one of the cards in given hand must be one of the pairs
+            if True in [x in [k for k, v in card_counts.items() if v == 2] for x in hand['cards']]:
+                all_trips = [x for x in hand['cards'] if x in [k for k, v in card_counts.items() if v == 2]]
+                return True, np.max(all_trips)
+
+            else:
+                return False, None
+
+
+
+        return False, None
 
     def _check_two_pair(self, hand, suit_counts, card_counts):
         """"""
@@ -516,102 +576,9 @@ class InterpreterEngine:
         # Returning the max number
         return np.max(board_cards)
 
-    def _analyze_hand(self, hand, board):
-        """
-
-        Args:
-            hand:
-            board:
-
-        Returns:
-
-        """
-
-        # Gathering informaiton about the board
-        suit_counts = {
-            x: board['suits'].count(x)
-            for x in board['suits']
-        }
-
-        card_counts = {
-            x: board['cards'].count(x)
-            for x in board['cards']
-        }
-
-        ################
-        ##### FLUSH ####
-        ################
-        flush_possible = True
-
-        while flush_possible:
-
-            # If there is a suit with more than 2 occurances in the board,
-            # Then we need to check for the possibility of a flush
-            max_suit_cnt = np.max([v for k, v in suit_counts.items()])
-
-            if not max_suit_cnt > 2:
-                flush_possible = False
-
-            # Now that we have determined that a flush is possible via the board,
-            # Lets determine if the two given hands also allow for it...
-            # 3 board, 2 hand
-            if max_suit_cnt == 3:
-                if not len(np.unique(hand['suits'])) == 1:
-                    flush_possible = False
-
-                # If we are here in the logic flow, the board contains 3 of the
-                # same suit and the hand has two of the same suit. All that is left
-                # to do now is check whether or not these two groups are the same
-                # suit...
-
-
-            # 4 board, 1 hand
-            if max_suit_cnt == 4:
-                pass
-
-        ################
-        ## FULL HOUSE ##
-        ################
-        fh_possible = True
-
-        while fh_possible:
-
-            # The board must be at least paired for a FH to be possible
-            if np.max([v for k, v in card_counts.items()]) < 2:
-                fh_possible = False
-
-
-        ################
-        ### STRAIGHT ###
-        ################
-        straight_possible = True
-
-        while straight_possible:
-
-            pass
-
-        ################
-        ### TWO PAIR ###
-        ################
-        two_pair_possible = True
-
-        while two_pair_possible:
-
-            pass
-
-        ################
-        ### ONE PAIR ###
-        ################
-        one_pair_possible = True
-
-        while one_pair_possible:
-
-            pass
-
-
 
 hand_one = {
-    'cards': [9, 10],
+    'cards': ['Q', 'A'],
     'suits': ['s', 's']
 }
 
@@ -621,7 +588,7 @@ hand_two = {
 }
 
 board = {
-    'cards': [5, 3, 'Q', 'K', 'J'],
+    'cards': ['A', 'A', 'Q', 'Q', 5],
     'suits': ['d', 's', 's', 's', 's']
 }
 
