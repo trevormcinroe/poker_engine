@@ -206,21 +206,98 @@ class InterpreterEngine:
                 else:
                     return True, board_pair, board_trips
 
-        # (2) Pair in hand that connects with pair on board that is not the same
-        if len(np.unique(hand['cards'])) == 1 and np.unique(hand['cards'])[0] in board['cards']:
+        # Every other fullhouse possibility requires a pair to be in the given hand
+        # if not len(np.unique(hand['cards'])) == 1:
+        #     return False, None, None
 
-            # We can actually do something a little abusive here. Since our logic flow above will return Quads
-            # for pair in hand that connects to the board (where there is also a pair of the connecting cards),
-            # we can simply check for the existence of a pair on the board
-            trips = np.unique(hand['cards'])[0]
-            pair = [k for k, v in card_counts.items() if v == 2]
+        # (2) Pair in hand that connects with the board AND board has a pair
+        elif len(np.unique(hand['cards'])) == 1 and np.unique(hand['cards'])[0] in board['cards']:
+
+            # Here in the logic flow, there are two possibilities;
+            # (a) The board only has one pair
+            # (b) the board has two pairs
+
+            # (a)
+            # In this case, we do not need to check for the higher pair
+            if len([k for k, v in card_counts.items() if v == 2]) == 1:
+                trips = np.unique(hand['cards'])[0]
+                pair = self._most_common(lst=board['cards'])
+                return True, trips, pair
+
+            # (b)
+            # In this case, however, we need to check to see which pair is higher
+            else:
+                trips = np.unique(hand['cards'])[0]
+                pair = np.max([k for k, v in card_counts.items() if v == 2])
+                return True, trips, pair
+
+        # (3) Trips on board:
+        elif 3 in [v for k, v in card_counts.items()]:
+
+            # (a) pair in hand
+            if len(np.unique(hand['cards'])) == 1:
+
+                # (i) Pair does not connect with board
+                if not hand['cards'][0] in board['cards']:
+                    trips = self._most_common(lst=board['cards'])
+                    pair = hand['cards'][0]
+                    return True, trips, pair
+
+                # (ii) Pair connects with the board. Need to check if the connected is higher
+                else:
+                    if hand['cards'][0] > self._most_common(lst=board['cards']):
+                        trips = hand['cards'][0]
+                        pair = self._most_common(lst=['board'])
+                        return True, trips, pair
+
+                    else:
+                        trips = self._most_common(lst=board['cards'])
+                        pair = hand['cards'][0]
+                        return True, trips, pair
+
+            # (b) pair between hand and board
+            elif True in [x in board['cards'] for x in hand['cards']]:
+                trips = self._most_common(lst=board['cards'])
+                pair = np.max([x for x in hand['cards'] if x in board['cards']])
+                return True, trips, pair
 
 
-        # (3) Trips on board, pair in hand
 
         # (4) Double paired board
+        elif len([k for k, v in card_counts.items() if v == 2]) == 2:
+
             # (a) One of the two in hand
             # (b) Both in hand (need to take higher one as trips)
+            # (C) totall misses
+
+            # (c)
+            if len([x in board['cards'] for x in hand['cards']].count(True)) == 0:
+                return False, None, None
+
+            # (a)
+            if len([x in board['cards'] for x in hand['cards']].count(True)) == 1:
+
+                # (i) The board pair that the hand connected with is higher than the non-connected
+                if np.max([k for k, v in board['cards'].items() if v == 2]) in hand['cards']:
+                    trips = np.max([k for k, v in board['cards'].items() if v == 2])
+                    pair = [k for k, v in board['cards'].items() if v == 2 and k not in hand['cards']][0]
+                    return True, trips, pair
+
+                # (ii) The board pair that the hand connected with is lower than the non-connected
+                if not np.max([k for k, v in board['cards'].items() if v == 2]) in hand['cards']:
+                    pair = np.max([k for k, v in board['cards'].items() if v == 2])
+                    trips = [k for k, v in board['cards'] if v == 2 and k != pair]
+                    return True, trips, pair
+
+            if len([x in board['cards'] for x in hand['cards']].count(True)) == 2:
+
+                # If both cards in the hand connect, then simply return the higher one as the trips, lower as pair
+                trips = np.max(hand['cards'])
+                pair = [x for x in hand['cards'] if x != trips][0]
+                return True, trips, pair
+
+        else:
+            return False, None, None
 
     def _check_flush(self, hand, board, suit_counts):
         """
