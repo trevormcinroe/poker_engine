@@ -104,7 +104,8 @@ class InterpreterEngine:
         # return self._check_fullhouse(hand=hand_one, board=board, card_counts=card_counts)
         # return self._check_flush(hand=hand_one, board=board, suit_counts=suit_counts)
         # return self._check_straight(hand=hand_one, board=board)
-        return self._check_trips(hand=hand_one, card_counts=card_counts)
+        # return self._check_trips(hand=hand_one, card_counts=card_counts)
+        return self._check_two_pair(hand=hand_one, card_counts=card_counts)
 
     def _check_straight_flush(self, hand, suit_counts, card_counts):
         """"""
@@ -535,9 +536,67 @@ class InterpreterEngine:
 
         return False, None
 
-    def _check_two_pair(self, hand, suit_counts, card_counts):
-        """"""
-        pass
+    def _check_two_pair(self, hand, card_counts):
+        """
+
+        Args:
+            hand:
+            suit_counts:
+            card_counts:
+
+        Returns:
+            Bool for existence, higher pair if exists, lower pair if exists
+        """
+
+        # (1) Board can simply have 2 pairs
+        # Again, we are abusing the logic flow in the above method
+        if len([k for k, v in card_counts.items() if v == 2]) == 2:
+
+            # (a) the hand could also connect with board. We must then see if this card is higher than the two pairs
+            if True not in [x in [k for k, v in card_counts.items()] for x in hand['cards']]:
+                return True, \
+                       np.max([k for k, v in card_counts.items() if v == 2]), \
+                       np.min([k for k, v in card_counts.items() if v == 2])
+
+            else:
+
+                # Gathering a list of all of the pairs...
+                pairs_list = [k for k, v in card_counts.items() if v == 2] \
+                             + [x for x in hand['cards'] if x in [k for k, v in card_counts.items()] ]
+
+                # Removing the smallest one
+                pairs_list.pop(pairs_list.index(np.min(pairs_list)))
+                return True, np.max(pairs_list), np.min(pairs_list)
+
+        # (2) Board can have >= one pair and hand can have pair
+        if len(np.unique(hand['cards'])) == 1 or len([k for k, v in card_counts.items() if v == 2]) > 0:
+
+            # (a) Paired hand
+            if len(np.unique(hand['cards'])) == 1:
+                pairs_list = hand['cards'][0] + [k for k, v in card_counts.items() if v == 2]
+                if len(pairs_list) == 2:
+                    return True, np.max(pairs_list), np.min(pairs_list)
+                else:
+                    pairs_list.pop(pairs_list.index(np.min(pairs_list)))
+                    return True, np.max(pairs_list), np.min(pairs_list)
+
+            # (b) no pocket pair
+            else:
+                if True in [x in [k for k, v in card_counts.items()] for x in hand['cards']]:
+                    print('here')
+                    pairs_list = [k for k, v in card_counts.items() if v == 2] \
+                                 + [x for x in hand['cards'] if x in [k for k, v in card_counts.items()]]
+                    if len(pairs_list) == 2:
+                        return True, np.max(pairs_list), np.min(pairs_list)
+                    else:
+                        pairs_list.pop(pairs_list.index(np.min(pairs_list)))
+                        return True, np.max(pairs_list), np.min(pairs_list)
+
+        # (3) Two hole cards both connect
+        if len([x for x in hand['cards'] if x in board['cards']]):
+            return True, np.max(hand['cards']), np.min(hand['cards'])
+
+        return False, None, None
 
     def _check_pair(self, hand, suit_counts, card_counts):
         """"""
@@ -578,7 +637,7 @@ class InterpreterEngine:
 
 
 hand_one = {
-    'cards': ['Q', 'A'],
+    'cards': [7, 'Q'],
     'suits': ['s', 's']
 }
 
@@ -588,7 +647,7 @@ hand_two = {
 }
 
 board = {
-    'cards': ['A', 'A', 'Q', 'Q', 5],
+    'cards': ['A', 2, 'Q', 7, 5],
     'suits': ['d', 's', 's', 's', 's']
 }
 
