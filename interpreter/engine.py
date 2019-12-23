@@ -100,7 +100,8 @@ class InterpreterEngine:
 
         # First finding what the two hands have
         # We'll begin with the first hand...
-        return self._check_quads(hand=hand_one, board=board, card_counts=card_counts)
+        # return self._check_quads(hand=hand_one, board=board, card_counts=card_counts)
+        return self._check_fullhouse(hand=hand_one, board=board, card_counts=card_counts)
         # return self._check_flush(hand=hand_one, board=board, suit_counts=suit_counts)
 
     def _check_straight_flush(self, hand, suit_counts, card_counts):
@@ -160,7 +161,7 @@ class InterpreterEngine:
         else:
             return False, None
 
-    def _check_fullhouse(self, hand, suit_counts, card_counts):
+    def _check_fullhouse(self, hand, board, card_counts):
         """
 
         Args:
@@ -177,8 +178,43 @@ class InterpreterEngine:
             return False, None, None
 
         # (1) Board can contain a fullhouse itself
+        if 3 in [v for k, v in card_counts.items()] and 2 in [v for k, v in card_counts.items()]:
+
+            # There are three possibilities here:
+            # (a) The hand misses the board and therefore plays the board
+            # (b) The hand connects with the board but the hand's trips are < board's trips
+            # (c) The hand connects with the board and the hand's trips are > board's trips
+
+            # (a)
+            if not True in np.unique([x in board['cards'] for x in hand['cards']]):
+                # The trips will be the most common and the pair will be the non-most-common
+                trips = self._most_common(lst=board['cards'])
+                pair = [x for x in board['cards'] if x != trips][0]
+
+                return True, trips, pair
+
+            else:
+                # Here in the logic flow, the hand has connected with the board somehow
+                # We can simpy use the values of the cards on the board to determine between (b) and (c)
+                board_trips = self._most_common(lst=board['cards'])
+                board_pair = [x for x in board['cards'] if x != board_trips][0]
+
+                # (b)
+                if board_trips > board_pair:
+                    return True, board_trips, board_pair
+                # (c)
+                else:
+                    return True, board_pair, board_trips
 
         # (2) Pair in hand that connects with pair on board that is not the same
+        if len(np.unique(hand['cards'])) == 1 and np.unique(hand['cards'])[0] in board['cards']:
+
+            # We can actually do something a little abusive here. Since our logic flow above will return Quads
+            # for pair in hand that connects to the board (where there is also a pair of the connecting cards),
+            # we can simply check for the existence of a pair on the board
+            trips = np.unique(hand['cards'])[0]
+            pair = [k for k, v in card_counts.items() if v == 2]
+
 
         # (3) Trips on board, pair in hand
 
@@ -391,7 +427,7 @@ class InterpreterEngine:
 
 
 hand_one = {
-    'cards': ['A', 'A'],
+    'cards': [2, 8],
     'suits': ['s', 's']
 }
 
@@ -401,7 +437,7 @@ hand_two = {
 }
 
 board = {
-    'cards': ['A', 'A', 'Q', 3, 2],
+    'cards': [5, 5, 5, 8, 8],
     'suits': ['d', 's', 's', 's', 's']
 }
 
