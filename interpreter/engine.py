@@ -90,6 +90,36 @@ class InterpreterEngine:
         first_hand = self._analyze_hand(hand=hand_one, board=board)
         second_hand = self._analyze_hand(hand=hand_two, board=board)
 
+    def _check_straight_flush(self, hand, board):
+        """"""
+        pass
+
+    def _check_fullhouse(self, hand, board):
+        """"""
+        pass
+
+    def _check_flush(self, hand, board):
+        """"""
+        pass
+
+    def _check_straight(self, hand, board):
+        """"""
+        pass
+
+    def _check_trips(self, hand, board):
+        """"""
+        pass
+
+    def _check_two_pair(self, hand, board):
+        """"""
+        pass
+
+    def _check_pair(self, hand, board):
+        """"""
+        pass
+
+
+
     def _analyze_hand(self, hand, board):
         """
 
