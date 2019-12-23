@@ -46,19 +46,19 @@ class InterpreterEngine:
         # list comprehension capabilities. We add in a simple if-else
         # statement to check if each item in the given dictionaries
         # exists within the list of facecards
-        hand_one = [
+        hand_one['cards'] = [
             self.face_card_translator[x]
             if x in list(self.face_card_translator.keys()) else x
             for x in hand_one['cards']
         ]
 
-        hand_two = [
+        hand_two['cards'] = [
             self.face_card_translator[x]
             if x in list(self.face_card_translator.keys()) else x
             for x in hand_two['cards']
         ]
 
-        board = [
+        board['cards'] = [
             self.face_card_translator[x]
             if x in list(self.face_card_translator.keys()) else x
             for x in board['cards']
@@ -86,39 +86,137 @@ class InterpreterEngine:
             board=board
         )
 
+        # Gathering informaiton about the board
+        suit_counts = {
+            x: board['suits'].count(x)
+            for x in board['suits']
+        }
+
+        card_counts = {
+            x: board['cards'].count(x)
+            for x in board['cards']
+        }
+
         # First finding what the two hands have
-        first_hand = self._analyze_hand(hand=hand_one, board=board)
-        second_hand = self._analyze_hand(hand=hand_two, board=board)
+        # We'll begin with the first hand...
 
-    def _check_straight_flush(self, hand, board):
+        return self._check_flush(hand=hand_one, board=board, suit_counts=suit_counts)
+
+    def _check_straight_flush(self, hand, suit_counts, card_counts):
         """"""
         pass
 
-    def _check_fullhouse(self, hand, board):
+    def _check_fullhouse(self, hand, suit_counts, card_counts):
         """"""
         pass
 
-    def _check_flush(self, hand, board):
+    def _check_flush(self, hand, board, suit_counts):
+        """
+
+        Args:
+            hand:
+            board:
+            suit_counts:
+
+        Returns:
+            Bool for existence, suit if exists, high card if exists
+        """
+
+        # Gathering some quick information about the most common suit on the board
+        max_suit_cnt = np.max([v for k, v in suit_counts.items()])
+
+        # There must be more than two of a suit for a flush to be possible
+        if not max_suit_cnt > 2:
+            return False, None, None
+
+        # Now that we have determined that a flush is possible via the board,
+        # Lets determine if the two given hands also allow for it...
+        # 3 board, 2 hand
+        if max_suit_cnt == 3:
+            if not len(np.unique(hand['suits'])) == 1:
+                return False, None, None
+
+            # If we are here in the logic flow, the board contains 3 of the
+            # same suit and the hand has two of the same suit. All that is left
+            # to do now is check whether or not these two groups are the same
+            # suit...
+            if self._most_common(lst=board['suits']) == np.unique(hand['suits']):
+                return True, \
+                       np.unique(hand['suits'])[0], \
+                       self._flush_high_card(hand=hand, board=board, suit=self._most_common(lst=board['suits']))
+            else:
+                return False, None, None
+
+        # 4 board, 1 hand
+        elif max_suit_cnt == 4:
+
+            # Here in the logic flow, we have determined that the board has 4 of the same suit on it
+            # In this case, there need only be one of the suit in the hand of the player
+            if self._most_common(lst=board['suits']) in hand['suits']:
+                return True, \
+                       self._most_common(lst=board['suits']), \
+                       self._flush_high_card(hand=hand, board=board, suit=self._most_common(lst=board['suits']))
+
+            else:
+                return False, None, None
+
+        # The final way is a flush on the board
+        elif max_suit_cnt == 5:
+            return True, \
+                   self._most_common(lst=board['suits']), \
+                   self._flush_high_card(hand=hand, board=board, suit=self._most_common(lst=board['suits']))
+
+        else:
+            return False, None, None
+
+    def _check_straight(self, hand, suit_counts, card_counts):
         """"""
         pass
 
-    def _check_straight(self, hand, board):
+    def _check_trips(self, hand, suit_counts, card_counts):
         """"""
         pass
 
-    def _check_trips(self, hand, board):
+    def _check_two_pair(self, hand, suit_counts, card_counts):
         """"""
         pass
 
-    def _check_two_pair(self, hand, board):
+    def _check_pair(self, hand, suit_counts, card_counts):
         """"""
         pass
 
-    def _check_pair(self, hand, board):
-        """"""
-        pass
+    def _most_common(self, lst):
+        """A simple utility to find the most common item in a list"""
+        return max(set(lst), key=lst.count)
 
+    def _flush_high_card(self, hand, board, suit):
+        """A utility that will find the high card in a flush
 
+        Args:
+            hand (dict):
+            board (dict):
+
+        Returns:
+            the high card of the flush
+        """
+
+        # The first thing we need to do is subset our lists of cards to only those that have the proper suit
+        # To do this, we take advantage of the compact
+        board_cards = [
+            board['cards'][ind] for ind
+            in [i for i, x in enumerate(board['suits']) if x == suit]
+        ]
+
+        hand_cards = [
+            hand['cards'][ind] for ind
+            in [i for i, x in enumerate(hand['suits']) if x == suit]
+        ]
+
+        # Now concatenating the two lists together
+        [board_cards.append(x) for x in hand_cards]
+
+        # Returning the max number
+        return np.max(board_cards)
 
     def _analyze_hand(self, hand, board):
         """
@@ -217,7 +315,7 @@ class InterpreterEngine:
 
 
 hand_one = {
-    'cards': [2, 'J'],
+    'cards': [2, 5],
     'suits': ['s', 's']
 }
 
@@ -227,13 +325,22 @@ hand_two = {
 }
 
 board = {
-    'cards': ['A', 'Q'],
-    'suits': ['s', 's']
+    'cards': ['K', 'Q', 5, 3, 4],
+    'suits': ['d', 's', 's', 's', 's']
+}
+
+suit_counts = {
+    x: board['suits'].count(x)
+    for x in board['suits']
 }
 
 a = InterpreterEngine()
 
-print(a._face_card_translate(hand_one=hand_one,
-                       hand_two=hand_two,
-                       board=board)
-)
+print(a.compare_hands(hand_one=hand_one, hand_two=hand_two, board=board))
+
+# print(a._face_card_translate(hand_one=hand_one,
+#                        hand_two=hand_two,
+#                        board=board)
+# )
+
+# print(a._check_flush(hand=hand_one, board=board, suit_counts=suit_counts))
