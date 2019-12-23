@@ -17,7 +17,8 @@ class InterpreterEngine:
             'straight': 4,
             'flush': 5,
             'full house': 6,
-            'straight flush': 7
+            'quads': 7,
+            'straight flush': 8
         }
 
         self.face_card_translator = {
@@ -99,16 +100,91 @@ class InterpreterEngine:
 
         # First finding what the two hands have
         # We'll begin with the first hand...
-
-        return self._check_flush(hand=hand_one, board=board, suit_counts=suit_counts)
+        return self._check_quads(hand=hand_one, board=board, card_counts=card_counts)
+        # return self._check_flush(hand=hand_one, board=board, suit_counts=suit_counts)
 
     def _check_straight_flush(self, hand, suit_counts, card_counts):
         """"""
         pass
 
+    def _check_quads(self, hand, board, card_counts):
+        """
+
+        Args:
+            hand:
+            board:
+            card_counts:
+
+        Returns:
+            Bool for existence, card if exists
+        """
+
+        if not np.max([v for k, v in card_counts.items()]) > 1:
+            return False, None
+
+        # (1) Quads on board
+        if np.max([v for k, v in card_counts.items()]) == 4:
+            return True, self._most_common(lst=board['cards'])
+
+        # (2) Pair in hand, board paired the same
+        elif 2 in [v for k, v in card_counts.items()] and len(np.unique(hand['cards'])) == 1:
+
+            # Pulling out a list of the paired cards in the board, then checking to see if the given hand is a pair
+            # that combines with one of the pairs on the board
+            board_pairs = []
+
+            for card in board['cards']:
+                if card_counts[card] == 2 and not card in board_pairs:
+                    board_pairs.append(card)
+
+            if np.unique(hand['cards'])[0] in board_pairs:
+                return True, np.unique(hand['cards'])[0]
+
+        # (2) Trips on board, last card in hand
+        elif 3 in [v for k, v in card_counts.items()]:
+
+            # Pulling out a list of the trip cards in the board, then checking to see if any of the cards
+            # in the given hand are the trip cards on the board
+            board_trips = []
+
+            for card in board['cards']:
+                if card_counts[card] == 3 and not card in board_trips:
+                    board_trips.append(card)
+
+            for hc in hand['cards']:
+                if hc in board_trips:
+                    return True, hc
+                else:
+                    continue
+
+        else:
+            return False, None
+
     def _check_fullhouse(self, hand, suit_counts, card_counts):
-        """"""
-        pass
+        """
+
+        Args:
+            hand:
+            suit_counts:
+            card_counts:
+
+        Returns:
+            Bool for existence, trips if exists, pair if exists
+        """
+
+        # In order for a fullhouse to be possible, the board must contain at least one pair
+        if not np.max([v for k, v in card_counts.items()]) > 1:
+            return False, None, None
+
+        # (1) Board can contain a fullhouse itself
+
+        # (2) Pair in hand that connects with pair on board that is not the same
+
+        # (3) Trips on board, pair in hand
+
+        # (4) Double paired board
+            # (a) One of the two in hand
+            # (b) Both in hand (need to take higher one as trips)
 
     def _check_flush(self, hand, board, suit_counts):
         """
@@ -315,7 +391,7 @@ class InterpreterEngine:
 
 
 hand_one = {
-    'cards': [2, 5],
+    'cards': ['A', 'A'],
     'suits': ['s', 's']
 }
 
@@ -325,7 +401,7 @@ hand_two = {
 }
 
 board = {
-    'cards': ['K', 'Q', 5, 3, 4],
+    'cards': ['A', 'A', 'Q', 3, 2],
     'suits': ['d', 's', 's', 's', 's']
 }
 
