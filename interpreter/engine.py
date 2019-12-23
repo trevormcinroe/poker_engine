@@ -536,12 +536,12 @@ class InterpreterEngine:
 
         return False, None
 
-    def _check_two_pair(self, hand, card_counts):
+    def _check_two_pair(self, hand, board, card_counts):
         """
 
         Args:
             hand:
-            suit_counts:
+            board:
             card_counts:
 
         Returns:
