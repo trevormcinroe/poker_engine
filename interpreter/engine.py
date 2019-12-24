@@ -173,7 +173,8 @@ class InterpreterEngine:
 
         # (2) Pair in hand, board paired the same
         if 2 in [v for k, v in card_counts.items()] and len(np.unique(hand['cards'])) == 1:
-            print('(2)')
+            # print('(2)')
+            # print(f'{board} \n {hand}')
             # Pulling out a list of the paired cards in the board, then checking to see if the given hand is a pair
             # that combines with one of the pairs on the board
             board_pairs = []
@@ -184,10 +185,13 @@ class InterpreterEngine:
 
             if np.unique(hand['cards'])[0] in board_pairs:
                 return True, np.unique(hand['cards'])[0]
+            else:
+                return False, None
 
         # (2) Trips on board, last card in hand
         elif 3 in [v for k, v in card_counts.items()]:
             print('(3)')
+            print(f'{board} \n {hand}')
             # Pulling out a list of the trip cards in the board, then checking to see if any of the cards
             # in the given hand are the trip cards on the board
             board_trips = []
@@ -196,13 +200,16 @@ class InterpreterEngine:
                 if card_counts[card] == 3 and card not in board_trips:
                     board_trips.append(card)
 
+            if len([x for x in hand['cards'] if x in board_trips]) == 0:
+                print('HERE COT DAMNIT')
+                return False, None
+            # else:
             for hc in hand['cards']:
                 if hc in board_trips:
                     return True, hc
                 else:
                     continue
-
-            return False, None
+            # return False, None
 
         else:
             return False, None
@@ -761,3 +768,10 @@ class InterpreterEngine:
 # )
 
 # print(a._check_flush(hand=hand_one, board=board, suit_counts=suit_counts))
+
+a = InterpreterEngine()
+board = {'cards': [11, 11, 10, 13, 11], 'suits': ['c', 's', 's', 'd', 'h']}
+hand_one = {'cards': [6, 3], 'suits': ['s', 'd']}
+hand_two = {'cards': [6, 3], 'suits': ['s', 'd']}
+
+print(a.compare_hands(hand_one=hand_one, hand_two=hand_two, board=board))
