@@ -19,6 +19,8 @@ class Deck:
 
         self.current_cards = None
 
+        self._create()
+
 
     def _create(self):
         """"""
@@ -32,17 +34,14 @@ class Deck:
         suit = np.random.choice(list(self.current_cards.keys()))
         card = np.random.choice(self.current_cards[suit])
 
+        # For whatever reason, using the above functions make the selections into strings...
+        try:
+            card = int(card)
+        except:
+            pass
+
         # Now we need to remove the chosen card from the current deck
         self.current_cards[suit].remove(card)
 
         return suit, card
 
-
-
-a = {'a': [9, 5, 2],
-     'b': [4, 5, 6]}
-
-
-print(a['a'].remove(9))
-
-print(a)

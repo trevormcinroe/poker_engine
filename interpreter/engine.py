@@ -97,7 +97,47 @@ class InterpreterEngine:
             x: board['cards'].count(x)
             for x in board['cards']
         }
+            
+        if self._check_quads(hand=hand_one, board=board, card_counts=card_counts)[0]:
+            hand = 'Quads'
+            _, card = self._check_quads(hand=hand_one, board=board, card_counts=card_counts)
+            return hand, card
 
+        elif self._check_fullhouse(hand=hand_one, board=board, card_counts=card_counts)[0]:
+            hand = 'Full house'
+            _, trips, pair = self._check_fullhouse(hand=hand_one, board=board, card_counts=card_counts)
+            return hand, (trips, pair)
+
+        elif self._check_flush(hand=hand_one, board=board, suit_counts=suit_counts)[0]:
+            hand = 'Flush'
+            _, suit, high_card = self._check_flush(hand=hand_one, board=board, suit_counts=suit_counts)
+            return hand, (suit, high_card)
+
+        elif self._check_straight(hand=hand_one, board=board)[0]:
+            hand = 'Straight'
+            _, high_card = self._check_straight(hand=hand_one, board=board)
+            return hand, high_card
+
+        elif self._check_trips(hand=hand_one, board=board, card_counts=card_counts)[0]:
+            hand = 'Trips'
+            _, trips = self._check_trips(hand=hand_one, board=board, card_counts=card_counts)
+            return hand, trips
+
+        elif self._check_two_pair(hand=hand_one, board=board, card_counts=card_counts)[0]:
+            hand = 'Two pair'
+            _, high_pair, low_pair = self._check_two_pair(hand=hand_one, board=board, card_counts=card_counts)
+            return hand, (high_pair, low_pair)
+
+        elif self._check_pair(hand=hand_one, board=board, card_counts=card_counts)[0]:
+            hand = 'One pair'
+            _, pair = self._check_pair(hand=hand_one, board=board, card_counts=card_counts)
+            return hand, pair
+
+        else:
+            hand = 'High card'
+            high_card = self._high_card(hand=hand_one, board=board)
+            return hand, high_card
+            
         # First finding what the two hands have
         # We'll begin with the first hand...
         # return self._check_quads(hand=hand_one, board=board, card_counts=card_counts)
@@ -105,7 +145,8 @@ class InterpreterEngine:
         # return self._check_flush(hand=hand_one, board=board, suit_counts=suit_counts)
         # return self._check_straight(hand=hand_one, board=board)
         # return self._check_trips(hand=hand_one, card_counts=card_counts)
-        return self._check_two_pair(hand=hand_one, card_counts=card_counts)
+        # return self._check_two_pair(hand=hand_one, card_counts=card_counts)
+        # return self._check_pair(hand=hand_one, board=board, card_counts=card_counts)
 
     def _check_straight_flush(self, hand, suit_counts, card_counts):
         """"""
@@ -131,14 +172,14 @@ class InterpreterEngine:
             return True, self._most_common(lst=board['cards'])
 
         # (2) Pair in hand, board paired the same
-        elif 2 in [v for k, v in card_counts.items()] and len(np.unique(hand['cards'])) == 1:
-
+        if 2 in [v for k, v in card_counts.items()] and len(np.unique(hand['cards'])) == 1:
+            print('(2)')
             # Pulling out a list of the paired cards in the board, then checking to see if the given hand is a pair
             # that combines with one of the pairs on the board
             board_pairs = []
 
             for card in board['cards']:
-                if card_counts[card] == 2 and not card in board_pairs:
+                if card_counts[card] == 2 and card not in board_pairs:
                     board_pairs.append(card)
 
             if np.unique(hand['cards'])[0] in board_pairs:
@@ -146,13 +187,13 @@ class InterpreterEngine:
 
         # (2) Trips on board, last card in hand
         elif 3 in [v for k, v in card_counts.items()]:
-
+            print('(3)')
             # Pulling out a list of the trip cards in the board, then checking to see if any of the cards
             # in the given hand are the trip cards on the board
             board_trips = []
 
             for card in board['cards']:
-                if card_counts[card] == 3 and not card in board_trips:
+                if card_counts[card] == 3 and card not in board_trips:
                     board_trips.append(card)
 
             for hc in hand['cards']:
@@ -160,6 +201,8 @@ class InterpreterEngine:
                     return True, hc
                 else:
                     continue
+
+            return False, None
 
         else:
             return False, None
@@ -219,12 +262,6 @@ class InterpreterEngine:
                 # (c)
                 else:
                     return True, board_pair, board_trips
-
-        # Every other fullhouse possibility requires a pair to be in the given hand
-        # if not len(np.unique(hand['cards'])) == 1:
-        #     return False, None, None
-
-
 
         # (3) Trips on board:
         elif 3 in [v for k, v in card_counts.items()]:
@@ -335,7 +372,14 @@ class InterpreterEngine:
                         pair = [k for k, v in card_counts.items() if v == 2 and k != trips][0]
                     return True, trips, pair
 
-
+        # (5) One pair board and other
+            if [k for k, v in card_counts.items() if v == 2][0] in hand['cards']:
+                if len([x for x in hand['cards'] if x in [k for k, v in card_counts.items() if v != 2]]):
+                    return True, \
+                           [k for k, v in card_counts.items() if v == 2][0], \
+                           [x for x in hand['cards'] if x in [k for k, v in card_counts.items() if v != 2]][0]
+            else:
+                return False, None, None
         else:
             return False, None, None
 
@@ -473,8 +517,18 @@ class InterpreterEngine:
 
             return False, None
 
-    def _check_trips(self, hand, card_counts):
-        """"""
+    def _check_trips(self, hand, board, card_counts):
+        """
+        
+        Args:
+            hand: 
+            board: 
+            card_counts: 
+
+        Returns:
+            Bool for existence, trips card if exists
+        """
+        
         # (1) Simply flopped trips
         if len(np.unique(hand['cards'])) == 1:
 
@@ -532,8 +586,6 @@ class InterpreterEngine:
             else:
                 return False, None
 
-
-
         return False, None
 
     def _check_two_pair(self, hand, board, card_counts):
@@ -569,11 +621,11 @@ class InterpreterEngine:
                 return True, np.max(pairs_list), np.min(pairs_list)
 
         # (2) Board can have >= one pair and hand can have pair
-        if len(np.unique(hand['cards'])) == 1 or len([k for k, v in card_counts.items() if v == 2]) > 0:
+        if len(np.unique(hand['cards'])) == 1 and len([k for k, v in card_counts.items() if v == 2]) > 0:
 
             # (a) Paired hand
             if len(np.unique(hand['cards'])) == 1:
-                pairs_list = hand['cards'][0] + [k for k, v in card_counts.items() if v == 2]
+                pairs_list = [hand['cards'][0]] + [k for k, v in card_counts.items() if v == 2]
                 if len(pairs_list) == 2:
                     return True, np.max(pairs_list), np.min(pairs_list)
                 else:
@@ -583,7 +635,7 @@ class InterpreterEngine:
             # (b) no pocket pair
             else:
                 if True in [x in [k for k, v in card_counts.items()] for x in hand['cards']]:
-                    print('here')
+
                     pairs_list = [k for k, v in card_counts.items() if v == 2] \
                                  + [x for x in hand['cards'] if x in [k for k, v in card_counts.items()]]
                     if len(pairs_list) == 2:
@@ -593,14 +645,57 @@ class InterpreterEngine:
                         return True, np.max(pairs_list), np.min(pairs_list)
 
         # (3) Two hole cards both connect
-        if len([x for x in hand['cards'] if x in board['cards']]):
+        if len([x for x in hand['cards'] if x in board['cards']]) == 2:
             return True, np.max(hand['cards']), np.min(hand['cards'])
+
+        # (4) Pair on board and pair between hand and board
+        if len([k for k, v in card_counts.items() if v == 2]) == 1:
+            if len([x for x in hand['cards'] if x in board['cards']]):
+                pairs_list = [x for x in hand['cards'] if x in board['cards']] \
+                             + [k for k, v in card_counts.items() if v == 2]
+                return True, np.max(pairs_list), np.min(pairs_list)
 
         return False, None, None
 
-    def _check_pair(self, hand, suit_counts, card_counts):
-        """"""
-        pass
+    def _check_pair(self, hand, board, card_counts):
+        """
+
+        Args:
+            hand:
+            board:
+            card_counts:
+
+        Returns:
+            Bool for existence, card if exists
+        """
+
+        # (1) The board can have a single pair
+        if len([k for k, v in card_counts.items() if v == 2]) == 1:
+            return True, [k for k, v in card_counts.items() if v == 2][0]
+
+        # (2) Pair in the hand
+        if len(np.unique(hand['cards'])) == 1:
+            return True, hand['cards'][0]
+
+        # (3) Card in hand pairs with board
+        if True in [x in board['cards'] for x in hand['cards']]:
+            return True, [x for x in hand['cards'] if x in board['cards']][0]
+
+        return False, None
+
+    def _high_card(self, hand, board):
+        """
+
+        Args:
+            hand:
+            board:
+
+        Returns:
+            number of highest card
+        """
+
+        card_candidates = hand['cards'] + board['cards']
+        return np.max(card_candidates)
 
     def _most_common(self, lst):
         """A simple utility to find the most common item in a list"""
@@ -635,32 +730,32 @@ class InterpreterEngine:
         # Returning the max number
         return np.max(board_cards)
 
-
-hand_one = {
-    'cards': [7, 'Q'],
-    'suits': ['s', 's']
-}
-
-hand_two = {
-    'cards': ['K', 'K'],
-    'suits': ['s', 'd']
-}
-
-board = {
-    'cards': ['A', 2, 'Q', 7, 5],
-    'suits': ['d', 's', 's', 's', 's']
-}
-
-suit_counts = {
-    x: board['suits'].count(x)
-    for x in board['suits']
-}
-
-a = InterpreterEngine()
-
-print(a.compare_hands(hand_one=hand_one, hand_two=hand_two, board=board))
-
-# print(a._face_card_translate(hand_one=hand_one,
+#
+# hand_one = {
+#     'cards': [3, 'Q'],
+#     'suits': ['s', 's']
+# }
+#
+# hand_two = {
+#     'cards': ['K', 'K'],
+#     'suits': ['s', 'd']
+# }
+#
+# board = {
+#     'cards': ['A', 'A', 'K', 7, 5],
+#     'suits': ['d', 's', 's', 's', 's']
+# }
+#
+# suit_counts = {
+#     x: board['suits'].count(x)
+#     for x in board['suits']
+# }
+#
+# a = InterpreterEngine()
+#
+# print(a.compare_hands(hand_one=hand_one, hand_two=hand_two, board=board))
+#
+# # print(a._face_card_translate(hand_one=hand_one,
 #                        hand_two=hand_two,
 #                        board=board)
 # )
