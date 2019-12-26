@@ -109,6 +109,61 @@ class InterpreterEngine:
         # Now, determining which hand has the strength value...
         hand_strengths = [self.hand_strength[x[0]] for x in hand_results]
 
+        # Now that we have a list of hand strengths, we should check to see if there is a global max
+        # If there is, return the hand number, the hand dict itself, and the hand type that was one with
+        if len([x for x in hand_strengths if x == np.max(hand_strengths)]) == 1:
+            hand_number = hand_strengths.index(np.max(hand_strengths))
+            winning_hand = hands[hand_number]
+            hand_type = hand_results[hand_number][0]
+            return hand_number, winning_hand, hand_type
+
+        # If there are 2 or more hands with the same strength, we need to look into some tie-breaking...
+        else:
+            # First, let's the type of hand that is the strongest
+            hand_type = [k for k, v in self.hand_strength.items() if v == np.max(hand_strengths)]
+
+            # Now, let's pull out a list of the hands that have the highest type
+            tied_hands = [
+                hands[x] for x in range(len(hands))
+                if hand_strengths[x] == np.max(hand_strengths)
+            ]
+
+            # Pulling out the results from the .hand_interpret() method
+            tied_hand_results = [
+                hand_results[x][1] for x in range(len(hands))
+                if hand_strengths[x] == np.max(hand_strengths)
+            ]
+
+            #################
+            # HAND BREAKOUT #
+            #################
+            if hand_type == 'quads':
+                pass
+
+            if hand_type == 'full house':
+                pass
+
+            if hand_type == 'flush':
+                pass
+
+            if hand_type == 'straight':
+                pass
+
+            if hand_type == 'trips':
+                pass
+
+            if hand_type == 'two pair':
+                pass
+
+            if hand_type == 'one pair':
+                pass
+
+            if hand_type == 'high card':
+                pass
+
+            return tied_hands
+
+
         return hand_strengths
 
     def hand_interpret(self, hand, board, suit_counts, card_counts):
@@ -777,8 +832,8 @@ class InterpreterEngine:
 
 a = InterpreterEngine()
 board = {'cards': [11, 11, 10, 13, 11], 'suits': ['c', 's', 's', 'd', 'h']}
-hand_one = {'cards': ['Q', 3], 'suits': ['s', 'd']}
-hand_two = {'cards': [6, 3], 'suits': ['s', 'd']}
+hand_one = {'cards': ['J', 3], 'suits': ['s', 'd']}
+hand_two = {'cards': ['J', 3], 'suits': ['s', 'd']}
 
 hands = [hand_one, hand_two]
 
