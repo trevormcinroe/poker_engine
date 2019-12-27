@@ -212,7 +212,37 @@ class InterpreterEngine:
 
             if hand_type == 'full house':
                 # The return from full house is ['full house', (trips, pair)]
-                pass
+                fh_results = [
+                    hand_results[x][1]
+                    for x in remaining_hand_indexes
+                ]
+                max_fh = np.max([x[0] for x in [y for y in fh_results]])
+
+                if len([x for x in remaining_hand_indexes if max_fh in hands[x]['cards']]) == 1:
+                    # We are here in the logic flow if only a sinlge hand is dominant
+                    hand_number = [
+                        x for x in remaining_hand_indexes
+                        if max_fh in hands[x]['cards']
+                    ]
+                    winning_hand = [hands[x] for x in hand_number]
+                    return hand_number, winning_hand, 'full house'
+
+                else:
+                    # If we have reached here in the logic flow, there is at least one player
+                    # that has a higher full house than the others. Let us extract them
+                    hand_number_trips = [
+                        x for x in remaining_hand_indexes
+                        if max_fh in hands[x]['cards']
+                    ]
+
+                    # Now there should be a check in the pairs.
+                    max_pair = np.max([x[1] for x in [y for y in [fh_results[z] for z in hand_number_trips]]])
+                    hand_number = [
+                        x for x in hand_number_trips
+                        if max_pair in hands[x]['cards']
+                    ]
+                    winning_hand = [hands[x] for x in hand_number]
+                    return hand_number, winning_hand, 'full house'
 
             if hand_type == 'flush':
                 pass
@@ -901,9 +931,10 @@ class InterpreterEngine:
 
 a = InterpreterEngine()
 board = {'cards': [11, 11, 10, 'A', 'A'], 'suits': ['c', 's', 's', 'd', 'h']}
-hand_one = {'cards': ['J', 'J'], 'suits': ['s', 'd']}
-hand_two = {'cards': ['A', 'A'], 'suits': ['s', 'd']}
+hand_one = {'cards': ['A', 10], 'suits': ['s', 'd']}
+hand_two = {'cards': [10, 10], 'suits': ['s', 'd']}
+hand_three = {'cards': ['J', 'A'], 'suits': ['s', 'd']}
 
-hands = [hand_one, hand_two]
+hands = [hand_one, hand_two, hand_three]
 
 print(a.compare_hands(hands=hands, board=board))
