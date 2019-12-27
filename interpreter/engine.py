@@ -245,10 +245,32 @@ class InterpreterEngine:
                     return hand_number, winning_hand, 'full house'
 
             if hand_type == 'flush':
-                pass
+                # The paradigm for flush and straight is:
+                # (1) Get the value of the highest flush card
+                # (2) Subset results to hands that contian this flush
+                flush_results = [hand_results[x][1][1] for x in remaining_hand_indexes]
+                max_flush = np.max(flush_results)
+
+                hand_number = [
+                    x for x in remaining_hand_indexes
+                    if max_flush in hand_results[x][1]
+                ]
+                winning_hand = [hands[x] for x in hand_number]
+                return hand_number, winning_hand, 'flush'
 
             if hand_type == 'straight':
-                pass
+                # The paradigm for flush and straight is:
+                # (1) Get the value of the highest flush card
+                # (2) Subset results to hands that contian this flush
+                straight_results = [hand_results[x][1] for x in remaining_hand_indexes]
+                max_straight = np.max(straight_results)
+
+                hand_number = [
+                    x for x in remaining_hand_indexes
+                    if max_straight == hand_results[x][1]
+                ]
+                winning_hand = [hands[x] for x in hand_number]
+                return hand_number, winning_hand, 'straight'
 
             if hand_type == 'trips':
                 pass
@@ -930,10 +952,11 @@ class InterpreterEngine:
 # print(a._check_flush(hand=hand_one, board=board, suit_counts=suit_counts))
 
 a = InterpreterEngine()
-board = {'cards': [11, 11, 10, 'A', 'A'], 'suits': ['c', 's', 's', 'd', 'h']}
-hand_one = {'cards': ['A', 10], 'suits': ['s', 'd']}
-hand_two = {'cards': [10, 10], 'suits': ['s', 'd']}
-hand_three = {'cards': ['J', 'A'], 'suits': ['s', 'd']}
+board = {'cards': [5, 6, 7, 8, 9],
+         'suits': ['s', 'd', 'c', 'd', 'h']}
+hand_one = {'cards': ['A', 10], 'suits': ['s', 's']}
+hand_two = {'cards': [10, 'J'], 'suits': ['s', 's']}
+hand_three = {'cards': ['J', 'A'], 'suits': ['s', 's']}
 
 hands = [hand_one, hand_two, hand_three]
 
