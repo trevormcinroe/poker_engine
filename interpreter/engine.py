@@ -115,22 +115,18 @@ class InterpreterEngine:
             hand_number = hand_strengths.index(np.max(hand_strengths))
             winning_hand = hands[hand_number]
             hand_type = hand_results[hand_number][0]
-            return hand_number, winning_hand, hand_type
+            return [hand_number], winning_hand, hand_type # we post hand_number as a list to help with ties
 
         # If there are 2 or more hands with the same strength, we need to look into some tie-breaking...
         else:
             # First, let's the type of hand that is the strongest
-            hand_type = [k for k, v in self.hand_strength.items() if v == np.max(hand_strengths)]
+            hand_type = [k for k, v in self.hand_strength.items() if v == np.max(hand_strengths)][0]
 
-            # Now, let's pull out a list of the hands that have the highest type
-            tied_hands = [
-                hands[x] for x in range(len(hands))
-                if hand_strengths[x] == np.max(hand_strengths)
-            ]
-
-            # Pulling out the results from the .hand_interpret() method
-            tied_hand_results = [
-                hand_results[x][1] for x in range(len(hands))
+            # Because we need to retain info about all hand indexes, we need to have a way to
+            # reference the main set all of hands while also being able to reference the tied
+            # hands at the top whenever we need to
+            remaining_hand_indexes = [
+                x for x in range(len(hands))
                 if hand_strengths[x] == np.max(hand_strengths)
             ]
 
@@ -138,9 +134,84 @@ class InterpreterEngine:
             # HAND BREAKOUT #
             #################
             if hand_type == 'quads':
-                pass
+                # (0) The first thing we should be checking for is if any of the players have
+                # HIGHER quads than the others
+                quad_results = [
+                    hand_results[x][1] for x in
+                    remaining_hand_indexes
+                ]
+                highest_quads = np.max(quad_results)
+
+                if not np.mean(quad_results) == highest_quads:
+                    hand_number = [
+                        x for x in remaining_hand_indexes
+                        if highest_quads in hands[x]['cards']
+                    ]
+                    winning_hand = [
+                        hands[x] for x
+                        in hand_number
+                    ]
+                    hand_type = 'quads'
+                    return hand_number, winning_hand, hand_type
+
+
+                # The only possible way that there can be non-tied quads is that one player has
+                # a hand card that is BOTH higher than the other player's hand cards AND higher
+                # than the highest, non-quad card on the board
+                remaining_board = [
+                    board['cards'][x] for x in range(len(board['cards']))
+                    if board['cards'][x] != hand_results[remaining_hand_indexes[0]][1]
+                ]
+
+                # Creating a list of all hand cards that are non-quad cards
+                # Here, we loop through each hand, each card in each hand, and append the highest
+                # card in the hand. This will allow us to index the list of hands to select as the winner
+                remaining_hand_cards = []
+                for idx in remaining_hand_indexes:
+                    holder = []
+                    for c in hands[idx]['cards']:
+                        if c > np.max(remaining_board):
+                            holder.append(c)
+                        else:
+                            continue
+                    remaining_hand_cards.append(holder)
+
+                # (1) If remaining_hand_cards list is full of empty lists, then there is a tie,
+                # as the highest board card is shared amongst all of the players
+                if False not in [len(x) == 0 for x in remaining_hand_cards]:
+                    # If here, we need to subset the remaining_hand_indexes that
+                    hand_number = remaining_hand_indexes
+                    winning_hand = [
+                        hands[x] for x in range(len(hands))
+                        if x in hand_number
+                    ]
+                    hand_type = 'quads'
+                    return hand_number, winning_hand, hand_type
+
+                else:
+                    # If here, then there is at least 1 hand that has a higher
+                    # First, finding the higest number in remaining_hand_cards
+                    unlisted = []
+                    for l in remaining_hand_cards:
+                        for i in l:
+                            unlisted.append(i)
+                    highest_card = np.max(unlisted)
+
+                    hand_number = [
+                        x for x in remaining_hand_indexes
+                        if highest_card in hands[x]['cards']
+                    ]
+
+                    winning_hand = [
+                        hands[x] for x in remaining_hand_indexes
+                        if x in hand_number
+                    ]
+
+                    hand_type = 'quads'
+                    return hand_number, winning_hand, hand_type
 
             if hand_type == 'full house':
+                # The return from full house is ['full house', (trips, pair)]
                 pass
 
             if hand_type == 'flush':
@@ -160,8 +231,6 @@ class InterpreterEngine:
 
             if hand_type == 'high card':
                 pass
-
-            return tied_hands
 
 
         return hand_strengths
@@ -831,9 +900,9 @@ class InterpreterEngine:
 # print(a._check_flush(hand=hand_one, board=board, suit_counts=suit_counts))
 
 a = InterpreterEngine()
-board = {'cards': [11, 11, 10, 13, 11], 'suits': ['c', 's', 's', 'd', 'h']}
-hand_one = {'cards': ['J', 3], 'suits': ['s', 'd']}
-hand_two = {'cards': ['J', 3], 'suits': ['s', 'd']}
+board = {'cards': [11, 11, 10, 'A', 'A'], 'suits': ['c', 's', 's', 'd', 'h']}
+hand_one = {'cards': ['J', 'J'], 'suits': ['s', 'd']}
+hand_two = {'cards': ['A', 'A'], 'suits': ['s', 'd']}
 
 hands = [hand_one, hand_two]
 

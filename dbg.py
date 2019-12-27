@@ -1,8 +1,8 @@
-from card_utils.deck import Deck
-from interpreter.engine import InterpreterEngine
-
-
-I = InterpreterEngine()
+# from card_utils.deck import Deck
+# from interpreter.engine import InterpreterEngine
+#
+#
+# I = InterpreterEngine()
 
 
 # txt = 'y'
@@ -50,6 +50,10 @@ I = InterpreterEngine()
 #
 #     print(f'{board}\n {hand_one} \n {hand} \n {items}')
 #     txt = input('Correct?')
+import numpy as np
+h = []
 
-a = [1, 9, 1]
-print(a.index(9))
+for i in range(3):
+    h.append([])
+
+print(h)
