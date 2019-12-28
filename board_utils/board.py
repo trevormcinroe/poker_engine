@@ -7,19 +7,15 @@ import numpy as np
 
 class Board:
 
-    def __init__(self, deck):
+    def __init__(self):
 
         self.current_board = {
-            'suits': [],
-            'cards': []
+            'cards': [],
+            'suits': []
         }
-        self.deck = deck
 
-    def next_card(self):
+    def add_card(self, suit, card):
         """"""
-
-        suit, card = self.deck.draw_card()
 
         self.current_board['suits'].append(suit)
         self.current_board['cards'].append(card)
-

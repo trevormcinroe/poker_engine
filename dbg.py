@@ -50,10 +50,25 @@
 #
 #     print(f'{board}\n {hand_one} \n {hand} \n {items}')
 #     txt = input('Correct?')
-import numpy as np
-h = []
 
-for i in range(3):
-    h.append([])
+from card_utils.deck import Deck
+from game_utils.game import Game
+from player_utils.player import Player
+from board_utils.board import Board
 
-print(h)
+p1 = Player(chips=100)
+p2 = Player(chips=100)
+p3 = Player(chips=100)
+d = Deck()
+b = Board()
+g = Game(deck=d, board=b)
+g.add_players([p1, p2, p3])
+
+g.play_hand()
+
+# g.deal_hand()
+#
+# for p in g.players:
+#     print(p.current_hand)
+
+

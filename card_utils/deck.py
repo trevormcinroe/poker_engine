@@ -45,3 +45,6 @@ class Deck:
 
         return suit, card
 
+    def shuffle(self):
+        """"""
+        self.current_cards = copy.deepcopy(self.all_cards)
