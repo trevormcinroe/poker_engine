@@ -273,7 +273,50 @@ class InterpreterEngine:
                 return hand_number, winning_hand, 'straight'
 
             if hand_type == 'trips':
-                pass
+                # Pulling out all of the board cards that are not involved in the trips
+                trip_results = [hand_results[x][1] for x in remaining_hand_indexes]
+
+                # Explicit check to see if there is a single player with max trips
+                if len([x for x in trip_results if x == np.max(trip_results)]) == 1:
+                    hand_number = [
+                        x for x in remaining_hand_indexes
+                        if np.max(trip_results) in hands[x]['cards']
+                    ]
+                    winning_hand = [hands[x] for x in hand_number]
+                    return hand_number, winning_hand, 'trips'
+
+                else:
+                    # Here in the logic flow, there is a tie in the level of the trips
+                    # Therefore, we need to break this tie in a different way
+                    remaining_board = [x for x in board['cards'] if x != np.max(trip_results)]
+
+                    # Outside of the trips, there are two remaining cards in each player's 5-card hand
+                    # Looping through each hand
+                    remaining_hand_cards = []
+                    for h in [hands[x]['cards'] for x in remaining_hand_indexes]:
+                        holder = []
+                        for c in h:
+                            if c != np.max(trip_results):
+                                holder.append(c)
+                            else:
+                                continue
+                        remaining_hand_cards.append(holder)
+
+                    # Now let's loop through each hand and only record the
+                    highest_remaining_hand_cards = [np.max(x) for x in remaining_hand_cards]
+
+                    if len([x for x in highest_remaining_hand_cards if x == np.max(highest_remaining_hand_cards)]) == 1:
+                        # We are here in the logic flow if there is a single winner
+                        hand_number = [
+                            x for x in remaining_hand_indexes
+                            if np.max(highest_remaining_hand_cards) in hands[x]['cards']
+                        ]
+                        winning_hand = [hands[x] for x in hand_number]
+                        return hand_number, winning_hand, 'trips'
+
+                    else:
+
+                        pass
 
             if hand_type == 'two pair':
                 pass
@@ -952,10 +995,10 @@ class InterpreterEngine:
 # print(a._check_flush(hand=hand_one, board=board, suit_counts=suit_counts))
 
 a = InterpreterEngine()
-board = {'cards': [5, 6, 7, 8, 9],
+board = {'cards': [5, 'J', 'J', 7, 9],
          'suits': ['s', 'd', 'c', 'd', 'h']}
-hand_one = {'cards': ['A', 10], 'suits': ['s', 's']}
-hand_two = {'cards': [10, 'J'], 'suits': ['s', 's']}
+hand_one = {'cards': [2, 4], 'suits': ['s', 's']}
+hand_two = {'cards': ['J', 'A'], 'suits': ['s', 's']}
 hand_three = {'cards': ['J', 'A'], 'suits': ['s', 's']}
 
 hands = [hand_one, hand_two, hand_three]
